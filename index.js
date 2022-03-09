@@ -44,4 +44,4 @@ for (let i = leftRest; i <= rightRest; i++){
     if (isPrimeNum(i)) colorPrint(i);
 }
 if(noPrimeNum)
-    console.log(`В этом диапазоне нет простых чисел[${leftRest},${rightRest}]`.red);
+    console.log(`В этом диапазоне нет простых чисел! [${leftRest},${rightRest}]`.red);
