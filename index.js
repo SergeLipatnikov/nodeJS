@@ -8,7 +8,7 @@ const rightRest = +process.argv[3];
 let noPrimeNum = true;
 
 if(isNaN(leftRest) || isNaN(rightRest)){
-    console.log('Не верные параметры'.red);
+    console.log('Не верные параметры!'.red);
     return;
 }
 
