@@ -1,47 +1,32 @@
-require('colors')
+import fs from 'fs';
+import readline from 'readline';
+import { Stream } from 'stream';
+const TEST_FILE = './access_tmp.log';
 
-const Colors = {GREEN : 0, YELLOW: 1, RED : 2}
+let IPs = process.argv.slice(2);
+const newStream = fs.createReadStream(TEST_FILE, 'utf-8');
+const outStream = new Stream();
+const readLineFromStream = readline.createInterface(newStream, outStream);
+const writeStreams = {};
 
-let currentColor = Colors.GREEN;
-const leftRest = +process.argv[2];
-const rightRest = +process.argv[3];
-let noPrimeNum = true;
-
-if(isNaN(leftRest) || isNaN(rightRest)){
-    console.log('Не верные параметры'.red);
-    return;
+if(IPs.length == 0) {
+    IPs = ['89.123.1.41', '34.48.240.111'];
 }
 
-const isPrimeNum = (num) => {
-    if (num <= 1)
-        return false;
-    for(let i = 2; i < num; i++)
-        if(num % i === 0) return false;
-    return true;
-}
-const changeColor = () => {
-    currentColor++;
-    if (currentColor > Colors.RED)
-        currentColor = Colors.GREEN;
-}
+IPs.forEach((IP) => {
+    writeStreams[IP] = fs.createWriteStream(`${IP}_requests.log`, {
+        encoding: 'utf-8',
+        flags: 'a'
+    });
 
-const colorPrint = (num) => {
-    if(noPrimeNum) noPrimeNum = false;
-    switch (currentColor){
-        case Colors.RED:
-            console.log(`${num}`.red);
-            break;
-        case Colors.GREEN:
-            console.log(`${num}`.green);
-            break;
-        case Colors.YELLOW:
-            console.log(`${num}`.yellow);
-            break;
-    }
-    changeColor();
-}
-for (let i = leftRest; i <= rightRest; i++){
-    if (isPrimeNum(i)) colorPrint(i);
-}
-if(noPrimeNum)
-    console.log(`В этом диапазоне нет простых чисел! [${leftRest},${rightRest}]`.red);
+});
+
+readLineFromStream.on('line', (line) => {
+    if(line.length == 0) { return; }
+
+    IPs.forEach((IP) => {
+        if(line.indexOf(IP) !== -1) {
+            writeStreams[IP].write(line + '\n');
+        }
+    });
+}); 
