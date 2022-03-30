@@ -1,47 +1,58 @@
-require('colors')
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat.js';
+import duration from 'dayjs/plugin/duration.js';
+import EventEmitter from 'events';
+import process from 'process';
 
-const Colors = {GREEN : 0, YELLOW: 1, RED : 2}
+dayjs.extend(duration);
 
-let currentColor = Colors.GREEN;
-const leftRest = +process.argv[2];
-const rightRest = +process.argv[3];
-let noPrimeNum = true;
+const setTimers = process.argv.slice(2);
+const emitter = new EventEmitter();
 
-if(isNaN(leftRest) || isNaN(rightRest)){
-    console.log('Не верные параметры'.red);
-    return;
-}
+class Timer {
+    constructor(timerValue) {
+        this.endTime = this.getTimerEndTime(timerValue);
+        this.timerValue = timerValue;
 
-const isPrimeNum = (num) => {
-    if (num <= 1)
-        return false;
-    for(let i = 2; i < num; i++)
-        if(num % i === 0) return false;
-    return true;
-}
-const changeColor = () => {
-    currentColor++;
-    if (currentColor > Colors.RED)
-        currentColor = Colors.GREEN;
-}
-
-const colorPrint = (num) => {
-    if(noPrimeNum) noPrimeNum = false;
-    switch (currentColor){
-        case Colors.RED:
-            console.log(`${num}`.red);
-            break;
-        case Colors.GREEN:
-            console.log(`${num}`.green);
-            break;
-        case Colors.YELLOW:
-            console.log(`${num}`.yellow);
-            break;
+        this.interval = setInterval(() => {
+            this.timerTick();
+        }, 1000);
     }
-    changeColor();
+    getTimerEndTime(timerValue) {
+        const timerToArrayOfValues = timerValue.split('-');
+        if (timerToArrayOfValues.length < 6) {
+            throw new Error('Неверный формат продолжительности таймера');
+        }
+        const now = dayjs();
+        const timerDuration = dayjs.duration({
+            seconds: timerToArrayOfValues[0],
+            minutes: timerToArrayOfValues[1],
+            hours: timerToArrayOfValues[2],
+            days: timerToArrayOfValues[3],
+            months: timerToArrayOfValues[4],
+            years: timerToArrayOfValues[5],          
+        });
+        return now.add(timerDuration);
+    }
+    timerTick() {
+        const duration = dayjs.duration(this.endTime.diff(dayjs()));
+        if (duration.asSeconds() <= 0) {
+            emitter.emit('timerFinish', `Таймер ${this.timerValue} завершился`);
+            clearInterval(this.interval);
+        } else {
+            emitter.emit('timerTick', `До таймера ${this.timerValue} осталось ${duration.format('YY лет MM месяцев DD дней HH:mm:ss')}`);
+        }
+    }
 }
-for (let i = leftRest; i <= rightRest; i++){
-    if (isPrimeNum(i)) colorPrint(i);
-}
-if(noPrimeNum)
-    console.log(`В этом диапазоне нет простых чисел! [${leftRest},${rightRest}]`.red);
+
+setTimers.forEach(inputTimer => {
+    new Timer(inputTimer);
+});
+
+emitter.on('timerFinish', (payload) => {
+    console.log(payload);
+});
+
+emitter.on('timerTick', (payload) => {
+    console.log(payload);
+}); 
