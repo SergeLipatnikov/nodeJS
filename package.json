@@ -19,6 +19,9 @@
     "colors": "^1.4.0",
     "dayjs": "^1.11.0",
     "events": "^3.3.0",
+    "fs": "0.0.1-security",
+    "inquirer": "^8.2.2",
+    "path": "^0.12.7",
     "process": "^0.11.10"
   },
   "devDependencies": {},
